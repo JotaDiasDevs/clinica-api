@@ -1,13 +1,16 @@
 package br.com.clinica_api.controller;
 
 import br.com.clinica_api.model.Paciente;
+import br.com.clinica_api.model.dto.LoginDTO;
 import br.com.clinica_api.repository.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -56,5 +59,29 @@ public class PacienteController {
         }
         pacienteRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
+        Optional<Paciente> pacienteOpt = pacienteRepository.findByEmail(loginDTO.email());
+        
+        if (pacienteOpt.isEmpty()) {
+            Map<String, String> erro = new HashMap<>();
+            erro.put("mensagem", "Email não encontrado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(erro);
+        }
+        
+        Paciente paciente = pacienteOpt.get();
+        
+        if (!paciente.getSenha().equals(loginDTO.senha())) {
+            Map<String, String> erro = new HashMap<>();
+            erro.put("mensagem", "Senha incorreta");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(erro);
+        }
+        
+        Map<String, Object> resposta = new HashMap<>();
+        resposta.put("mensagem", "Login realizado com sucesso");
+        resposta.put("paciente", paciente);
+        return ResponseEntity.ok(resposta);
     }
 }
